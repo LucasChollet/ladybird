@@ -12,6 +12,8 @@
 #include <LibWeb/CSS/Parser/Parser.h>
 #include <LibWeb/CSS/StyleComputer.h>
 #include <LibWeb/CSS/StyleValues/ImageStyleValue.h>
+#include <LibWeb/CSS/StyleValues/NumberStyleValue.h>
+#include <LibWeb/CSS/StyleValues/PercentageStyleValue.h>
 #include <LibWeb/CSS/StyleValues/ShorthandStyleValue.h>
 #include <LibWeb/DOM/Document.h>
 #include <LibWeb/DOM/Element.h>
@@ -242,6 +244,13 @@ void ElementInlineCSSStyleDeclaration::update_style_attribute()
 bool PropertyOwningCSSStyleDeclaration::set_a_css_declaration(PropertyID property_id, NonnullRefPtr<CSSStyleValue const> value, Important important)
 {
     // FIXME: Handle logical property groups.
+
+    if (property_id == PropertyID::Opacity) {
+        VERIFY(value->is_percentage() || value->is_number());
+        if (value->is_percentage())
+            value = NumberStyleValue::create(value->as_percentage().percentage().as_fraction());
+        value = NumberStyleValue::create(clamp(value->as_number().value(), 0, 1));
+    }
 
     for (auto& property : m_properties) {
         if (property.property_id == property_id) {
