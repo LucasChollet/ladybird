@@ -1,0 +1,95 @@
+type [u8] {
+    wellknown_traits(?Sized);
+}
+
+
+type bool {
+    #layout(size = 1, align = 1);
+    wellknown_traits(Copy);
+}
+
+mod ::std {
+    mod io {
+        type Cursor<&[u8]> {
+            #layout(size = 24, align = 8);
+            fn new(&[u8]) -> Cursor<&[u8]>;
+        }
+    }
+
+    mod option {
+        type Option<::image::ImageReader<::std::io::Cursor<&[u8]>>> {
+            #layout(size = 64, align = 8);
+
+            fn unwrap(self) -> ::image::ImageReader<::std::io::Cursor<&[u8]>>;
+        }
+
+        type Option<::image::DynamicImage> {
+            #layout(size = 40, align = 8);
+
+            fn unwrap(self) -> ::image::DynamicImage;
+        }
+    }
+
+    mod result {
+        type Result<::image::ImageReader<::std::io::Cursor<&[u8]>>, ::std::io::Error> {
+            #layout(size = 64, align = 8);
+
+            fn is_err(&self) -> bool;
+            fn ok(self) -> ::std::option::Option<::image::ImageReader<::std::io::Cursor<&[u8]>>>;
+        }
+    }
+
+    mod slice {
+        fn from_raw_parts(*const u8, usize) -> &[u8];
+    }
+
+    mod vec {
+        type Vec<u8> {
+            #layout(size = 24, align = 8);
+            fn as_mut_ptr(&mut self) -> *mut u8;
+        }
+    }
+}
+
+mod image {
+    // FIXME: Zngur refuses to expose traits with a static function like read_image_boxed.
+    //        For now, we just use the `decode()` function instead.
+
+    // trait ImageDecoder {
+    //     fn dimensions(&self) -> (u32, u32);
+    //     fn color_type(&self) -> ColorType;
+    //     fn read_image(self, &mut [u8]) -> ImageResult<()>;
+    //     fn read_image_boxed(Box<Self>, &mut [u8]) -> ImageResult<()>;
+    // }
+
+    type DynamicImage {
+        #layout(size = 40, align = 8);
+        fn height(&self) -> u32;
+        fn width(&self) -> u32;
+        fn to_rgba8(&self) -> RgbaImage;
+    }
+
+    type RgbaImage {
+        #layout(size = 32, align = 8);
+        fn into_raw(self) -> ::std::vec::Vec<u8>;
+    }
+
+    type ImageError {
+        #layout(size = 64, align = 8);
+    }
+
+    type ::std::result::Result<DynamicImage, ImageError> {
+        #layout(size = 64, align = 8);
+        fn is_err(&self) -> bool;
+        fn ok(self) -> ::std::option::Option<::image::DynamicImage>;
+    }
+
+    type ImageReader<::std::io::Cursor<&[u8]>> {
+        #layout(size = 64, align = 8);
+
+        fn new(::std::io::Cursor<&[u8]>) -> ImageReader<::std::io::Cursor<&[u8]>>;
+        fn with_guessed_format(self) -> ::std::result::Result<ImageReader<::std::io::Cursor<&[u8]>>, ::std::io::Error>;
+        // fn into_decoder(self) -> ImageResult<ImageDecoder>;
+        fn decode(self) -> ::std::result::Result<DynamicImage, ImageError>;
+    }
+}

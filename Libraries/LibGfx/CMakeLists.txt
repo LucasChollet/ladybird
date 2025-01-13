@@ -140,3 +140,18 @@ endif()
 if (HAS_VULKAN)
     target_link_libraries(LibCore PUBLIC Vulkan::Vulkan Vulkan::Headers)
 endif()
+
+# Rust integration
+include(FetchContent)
+
+FetchContent_Declare(
+        Corrosion
+        GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+)
+FetchContent_MakeAvailable(Corrosion)
+
+corrosion_import_crate(MANIFEST_PATH ImageFormats/RustWrapper/Cargo.toml)
+corrosion_set_env_vars(rust_image_wrapper "LADYBIRD_RUST_HEADER_OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ImageFormats/GeneratedWrapper.h")
+add_dependencies(all_generated rust_image_wrapper)
+
+target_link_libraries(LibGfx PRIVATE rust_image_wrapper)
